@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>HYBRID 5 — Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;900&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0a0a0a;--surface:#141414;--border:#1e1e1e;--border2:#2a2a2a;
+  --text:#f0f0f0;--muted:#555;--muted2:#333;--green:#27ae60;--red:#e74c3c;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overscroll-behavior:none;}
+.mono{font-family:'DM Mono',monospace;}
+.syne{font-family:'Syne',sans-serif;}
+.nav{position:sticky;top:0;z-index:100;background:rgba(10,10,10,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;}
+.nav-back{background:var(--border2);border:none;color:var(--text);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;}
+.nav-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:900;flex:1;}
+/* HOME */
+#view-home{padding:24px 16px 100px;}
+.week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:24px;}
+.week-cell{border-radius:10px;padding:8px 2px;text-align:center;cursor:pointer;}
+.week-cell.rest-cell{opacity:0.4;cursor:default;}
+.wday{font-family:'DM Mono',monospace;font-size:9px;color:rgba(255,255,255,0.55);}
+.wsession{font-family:'Syne',sans-serif;font-size:10px;font-weight:900;color:white;margin-top:3px;}
+.wdot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.2);margin:4px auto 0;}
+.wdot.done{background:rgba(255,255,255,0.9);}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 12px;text-align:center;}
+.stat-val{font-family:'Syne',sans-serif;font-size:26px;font-weight:900;}
+.stat-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px;letter-spacing:1px;}
+.day-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:10px;overflow:hidden;cursor:pointer;display:flex;align-items:stretch;transition:border-color 0.2s;}
+.day-card.rest-card{cursor:default;opacity:0.5;}
+.cbar{width:5px;flex-shrink:0;}
+.cbody{padding:14px 16px;flex:1;}
+.cmeta{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1.5px;}
+.ctitle{font-family:'Syne',sans-serif;font-size:20px;font-weight:900;line-height:1.1;margin-top:2px;}
+.cfocus{font-size:11px;color:var(--muted);margin-top:2px;}
+.cstatus{font-family:'DM Mono',monospace;font-size:10px;margin-top:8px;}
+.badge-done{color:#27ae60;}
+.carrow{display:flex;align-items:center;padding-right:14px;color:var(--muted2);font-size:20px;}
+/* SESSION */
+#view-session{display:none;padding-bottom:120px;}
+.session-header{padding:20px 16px;color:white;}
+.session-meta{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.55);}
+.session-title{font-family:'Syne',sans-serif;font-size:30px;font-weight:900;margin:4px 0 2px;}
+.session-focus{font-size:12px;color:rgba(255,255,255,0.7);}
+.session-note{margin-top:12px;background:rgba(0,0,0,0.25);border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.7;color:rgba(255,255,255,0.75);}
+.ex-cards{padding:16px;}
+.ex-card{background:white;border-radius:14px;margin-bottom:12px;overflow:hidden;}
+.ex-card-head{padding:12px 14px 10px;display:flex;align-items:flex-start;gap:10px;}
+.ex-num{width:24px;height:24px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;color:#999;flex-shrink:0;margin-top:1px;}
+.ex-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:#111;}
+.ex-target{font-size:11px;color:#888;margin-top:2px;}
+.ex-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:0.4px;white-space:nowrap;display:inline-block;margin-top:4px;}
+.tag-Strength{background:#fff3e0;color:#bf360c;border:1px solid #ffcc80;}
+.tag-Hypertrophy{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;}
+.tag-Pump{background:#fce4ec;color:#880e4f;border:1px solid #f48fb1;}
+.tag-Core{background:#e3f2fd;color:#0d47a1;border:1px solid #90caf9;}
+.tag-Recovery{background:#f3e5f5;color:#4a148c;border:1px solid #ce93d8;}
+.tag-Conditional{background:#fff8e1;color:#f57f17;border:1px solid #ffe082;}
+.ex-cue{font-size:11px;color:#888;font-style:italic;line-height:1.5;padding:0 14px 10px 48px;}
+.set-logger{background:#f8f8f8;border-top:1px solid #eee;padding:10px 14px;}
+.set-labels{display:grid;grid-template-columns:28px 1fr 1fr 28px;gap:6px;margin-bottom:6px;}
+.set-lbl{font-family:'DM Mono',monospace;font-size:9px;color:#bbb;letter-spacing:1px;text-align:center;}
+.set-row{display:grid;grid-template-columns:28px 1fr 1fr 28px;gap:6px;align-items:center;margin-bottom:6px;}
+.set-badge{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;background:#e8e8e8;color:#aaa;cursor:pointer;transition:all 0.2s;margin:0 auto;}
+.set-badge.logged{background:#27ae60;color:white;}
+.set-input{border:1px solid #e0e0e0;border-radius:8px;padding:7px 8px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600;color:#111;background:white;width:100%;text-align:center;-webkit-appearance:none;}
+.set-input:focus{outline:none;border-color:#27ae60;}
+.set-input.has-val{border-color:#c8e6c9;background:#f1f8e9;}
+.prev-val{font-family:'DM Mono',monospace;font-size:10px;color:#bbb;text-align:center;margin-top:2px;}
+.add-set-btn{width:100%;border:1.5px dashed #ddd;background:transparent;border-radius:8px;padding:8px;font-size:12px;color:#bbb;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(10,10,10,0.97);backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:12px 16px 48px;display:flex;gap:10px;z-index:200;}
+.btn-finish{flex:1;background:var(--green);border:none;color:white;border-radius:12px;padding:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:900;cursor:pointer;}
+.btn-discard{background:var(--border2);border:none;color:var(--muted);border-radius:12px;padding:14px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;}
+/* HISTORY */
+#view-history{display:none;padding-bottom:80px;}
+.history-session{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;}
+.history-head{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;}
+.history-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.history-day{font-family:'Syne',sans-serif;font-size:15px;font-weight:900;}
+.history-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px;}
+.history-stats-line{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:4px;}
+.history-body{display:none;padding:0 16px 14px;}
+.history-body.open{display:block;}
+.history-ex{border-top:1px solid var(--border);padding:10px 0;}
+.history-ex-name{font-size:13px;font-weight:600;}
+.history-set-row{display:flex;gap:16px;margin-top:4px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+/* MANUAL */
+#view-manual{display:none;padding-bottom:80px;}
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;}
+.form-label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;}
+.form-select,.form-dateinput{width:100%;background:#1e1e1e;border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:12px;-webkit-appearance:none;}
+.form-dateinput{font-family:'DM Mono',monospace;color-scheme:dark;}
+.manual-ex{background:white;border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.manual-ex-head{padding:12px 14px 8px;}
+.manual-ex-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#111;}
+.manual-ex-sub{font-size:11px;color:#888;margin-top:2px;}
+.manual-set-area{background:#f8f8f8;padding:10px 14px;}
+.manual-set-labels{display:grid;grid-template-columns:28px 1fr 1fr;gap:6px;margin-bottom:6px;}
+.manual-set-row{display:grid;grid-template-columns:28px 1fr 1fr;gap:6px;align-items:center;margin-bottom:6px;}
+.manual-set-num{width:24px;height:24px;border-radius:50%;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;color:#aaa;margin:0 auto;}
+.manual-input{border:1px solid #e0e0e0;border-radius:8px;padding:8px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600;color:#111;background:white;width:100%;text-align:center;-webkit-appearance:none;}
+.manual-input:focus{outline:none;border-color:#27ae60;}
+.manual-add-btn{width:100%;border:1.5px dashed #ddd;background:transparent;border-radius:8px;padding:7px;font-size:12px;color:#bbb;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:2px;}
+.btn-save{width:100%;background:var(--green);border:none;color:white;border-radius:12px;padding:14px;font-family:'Syne',sans-serif;font-size:15px;font-weight:900;cursor:pointer;margin-top:8px;}
+/* TOAST */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:#1a1a1a;color:white;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;transition:transform 0.3s;border:1px solid #333;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- HOME -->
+<div id="view-home">
+  <div style="padding:24px 16px 0;">
+    <div class="mono" style="font-size:10px;color:var(--muted);letter-spacing:3px;margin-bottom:6px;">WORKOUT TRACKER</div>
+    <h1 class="syne" style="font-size:34px;font-weight:900;line-height:1;background:linear-gradient(90deg,#fff 60%,#444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">HYBRID 5 v2</h1>
+    <p style="font-size:12px;color:var(--muted);margin-top:5px;">PPL + Upper/Lower · Injury-Adapted</p>
+  </div>
+  <div style="padding:20px 16px 0;">
+    <div class="week-strip" id="week-strip"></div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val" id="stat-total">0</div><div class="stat-label">SESSIONS</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-week">0</div><div class="stat-label">THIS WEEK</div></div>
+      <div class="stat-card"><div class="stat-val" id="stat-streak">0</div><div class="stat-label">STREAK</div></div>
+    </div>
+  </div>
+  <div style="padding:0 16px 100px;" id="home-cards"></div>
+</div>
+
+<!-- SESSION -->
+<div id="view-session">
+  <div class="nav">
+    <button class="nav-back" onclick="goHome()">← Back</button>
+    <div class="nav-title" id="session-nav-title"></div>
+  </div>
+  <div id="session-header-block"></div>
+  <div class="ex-cards" id="ex-cards-container"></div>
+  <div style="padding:0 16px 8px;">
+    <div style="background:white;border-radius:14px;padding:14px;">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:#bbb;letter-spacing:1.5px;margin-bottom:8px;">SESSION NOTES</div>
+      <textarea id="session-remarks" placeholder="How did it feel? Any PRs, pain, energy level, notes..." style="width:100%;border:1px solid #eee;border-radius:8px;padding:10px;font-family:'DM Sans',sans-serif;font-size:13px;color:#333;resize:none;min-height:80px;outline:none;"></textarea>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-discard" onclick="discardSession()">Discard</button>
+    <button class="btn-finish" onclick="finishSession()">Finish Session ✓</button>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div id="view-history">
+  <div class="nav">
+    <button class="nav-back" onclick="goHome()">← Back</button>
+    <div class="nav-title">Session History</div>
+  </div>
+  <div style="padding:16px;" id="history-container"></div>
+</div>
+
+<!-- MANUAL ENTRY -->
+<div id="view-manual">
+  <div class="nav">
+    <button class="nav-back" onclick="goHome()">← Back</button>
+    <div class="nav-title">Log Past Session</div>
+  </div>
+  <div style="padding:16px;">
+    <div class="form-card">
+      <div class="mono" style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:12px;">SESSION DETAILS</div>
+      <label class="form-label">DAY</label>
+      <select id="manual-day" class="form-select" onchange="buildManualExercises()">
+        <option value="">Select day...</option>
+        <option value="0">🟢 LEGS 1 — Monday</option>
+        <option value="1">🔴 PUSH — Tuesday</option>
+        <option value="2">🔵 PULL — Wednesday</option>
+        <option value="3">🩵 LEGS 2 — Thursday</option>
+        <option value="4">🟠 UPPER — Saturday</option>
+      </select>
+      <label class="form-label">DATE</label>
+      <input type="date" id="manual-date" class="form-dateinput">
+    </div>
+    <div id="manual-exercises"></div>
+    <div class="form-card" style="margin-top:0;">
+      <label class="form-label">NOTES (optional)</label>
+      <textarea id="manual-remarks" placeholder="Any notes about this session..." style="width:100%;background:#1e1e1e;border:1px solid var(--border2);color:var(--text);border-radius:10px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;resize:none;min-height:70px;outline:none;"></textarea>
+    </div>
+    <button class="btn-save" onclick="saveManualSession()">Save Session ✓</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// PROGRAM DATA
+// ============================================================
+const DAYS = [
+  { id:'legs1', day:'Day 1', label:'LEGS 1', weekday:'Monday', focus:'Hamstrings · Glutes · Calves', color:'#27ae60', icon:'🟢',
+    note:'Hamstring-led day. Start with curls while fresh — hamstrings are priority. Smith RDL is optional, only if lower back feels good.',
+    exercises:[
+      {name:'Seated Leg Curl',sets:3,reps:'10–12',rest:'90s',cue:'Hamstrings first while fully fresh. Seated = stretched position = superior growth stimulus.',tag:'Strength'},
+      {name:'Leg Press',sets:3,reps:'8–10',rest:'3 min',cue:'Shoulder-width foot placement. Full ROM, controlled descent, do not lock knees at top.',tag:'Strength'},
+      {name:'Leg Extension (machine)',sets:3,reps:'12–15',rest:'90s',cue:'Pure quad isolation. Research confirms: safe and highly effective.',tag:'Hypertrophy'},
+      {name:'Smith Machine RDL',sets:3,reps:'8–10',rest:'2 min',cue:'OPTIONAL. Hinge at hips, bar close to legs, stop at shin. Skip immediately if any back discomfort.',tag:'Conditional'},
+      {name:'Standing Calf Raise',sets:3,reps:'10–15',rest:'60s',cue:'Full stretch at bottom, 1s pause at top. Calves respond to stretch and volume.',tag:'Hypertrophy'},
+    ]},
+  { id:'push', day:'Day 2', label:'PUSH', weekday:'Tuesday', focus:'Chest · Triceps · Side Delts', color:'#c0392b', icon:'🔴',
+    note:'Machine and cable only — zero free-weight pressing. Chest gets full session, triceps and side delts follow.',
+    exercises:[
+      {name:'Seated Chest Press Machine',sets:3,reps:'6–8',rest:'3 min',cue:'Strength anchor of the week. Retract scapula, full ROM every rep.',tag:'Strength'},
+      {name:'Pec Deck / Machine Fly',sets:3,reps:'12–15',rest:'90s',cue:'Lengthened stretch position = maximum hypertrophy stimulus. Slow eccentric.',tag:'Hypertrophy'},
+      {name:'Low-to-High Cable Fly',sets:3,reps:'12–15',rest:'90s',cue:'Upper chest emphasis. Constant cable tension beats dumbbells.',tag:'Hypertrophy'},
+      {name:'Cable Lateral Raise (unilateral)',sets:3,reps:'15–20',rest:'60s',cue:'Slight forward lean. Cable keeps tension at the bottom — dumbbells lose it.',tag:'Hypertrophy'},
+      {name:'Overhead Tricep Extension (cable)',sets:3,reps:'10–12',rest:'90s',cue:'Long head fully stretched. Best single tricep mass builder.',tag:'Hypertrophy'},
+      {name:'Tricep Pushdown V-bar',sets:3,reps:'12–15',rest:'60s',cue:'Elbows pinned, full lockout. Lateral head finisher.',tag:'Pump'},
+    ]},
+  { id:'pull', day:'Day 3', label:'PULL', weekday:'Wednesday', focus:'Back · Biceps · Rear Delts · Erectors', color:'#2980b9', icon:'🔵',
+    note:'Chest-supported rows throughout — zero lower back stress. Erector work is optional at the end, only if feeling good.',
+    exercises:[
+      {name:'Lat Pulldown or Pull-Ups',sets:3,reps:'8–10',rest:'2 min',cue:'Neutral or wide grip. Think elbows to hips, not arms pulling.',tag:'Strength'},
+      {name:'Chest-Supported Row (machine)',sets:3,reps:'8–10',rest:'2 min',cue:'Chest on pad eliminates all lower back involvement. Pull elbows behind torso.',tag:'Strength'},
+      {name:'Shrugs (on row machine)',sets:2,reps:'12–15',rest:'60s',cue:'Finisher right after last row set. Elevate straight up, pause at top.',tag:'Pump'},
+      {name:'Seated Cable Row (close grip)',sets:3,reps:'10–12',rest:'90s',cue:'Mid-back focus. Brace core, do not lean back excessively.',tag:'Hypertrophy'},
+      {name:'Rear Delt Machine Fly',sets:3,reps:'15–20',rest:'60s',cue:'Non-negotiable for shoulder joint health. Counterbalances all pressing.',tag:'Hypertrophy'},
+      {name:'Preacher Curl',sets:3,reps:'10–12',rest:'90s',cue:'Pad locks elbow drift — strict bicep isolation.',tag:'Hypertrophy'},
+      {name:'Hammer Curl',sets:2,reps:'12–15',rest:'60s',cue:'Brachialis thickness. Neutral wrist = safer on elbow.',tag:'Hypertrophy'},
+      {name:'Back Extension Machine (erectors)',sets:3,reps:'12–15',rest:'90s',cue:'OPTIONAL. Machine-supported only. Controlled ROM, no heavy loading. Skip if lower back is fatigued from Wednesday legs.',tag:'Conditional'},
+    ]},
+  { id:'legs2', day:'Day 4', label:'LEGS 2', weekday:'Thursday', focus:'Quads · Glutes · Adductors · Abs', color:'#16a085', icon:'🩵',
+    note:'Quad-led day. 3 full days since Legs 1 — hamstrings recovered. Hack squat is the strength anchor today.',
+    exercises:[
+      {name:'Seated Leg Curl',sets:3,reps:'12–15',rest:'90s',cue:'Higher reps than Monday — different stimulus, same muscle. Keeps weekly hamstring volume optimal.',tag:'Hypertrophy'},
+      {name:'Leg Press',sets:3,reps:'10–12',rest:'2 min',cue:'Slightly higher reps than Monday. Experiment with foot position for quad vs glute bias.',tag:'Hypertrophy'},
+      {name:'Smith Machine RDL',sets:3,reps:'8–10',rest:'2 min',cue:'OPTIONAL. Second hinge this week. Only attempt if lower back is fully recovered from Monday.',tag:'Conditional'},
+      {name:'Hack Squat (machine)',sets:3,reps:'8–10',rest:'2 min',cue:'Feet forward = quad bias. Control the descent — knees track over toes. Best quad builder in this split.',tag:'Strength'},
+      {name:'Adductor Machine',sets:3,reps:'15–20',rest:'60s',cue:'Often undertrained. Full ROM, slow eccentric for inner thigh development.',tag:'Hypertrophy'},
+      {name:'Ab Wheel Rollout',sets:3,reps:'8–12',rest:'60s',cue:'Best anti-extension core exercise. From knees if needed. Brace hard throughout.',tag:'Core'},
+    ]},
+  { id:'upper', day:'Day 5', label:'UPPER', weekday:'Saturday', focus:'Chest · Back · Arms · Delts', color:'#d35400', icon:'🟠',
+    note:'Full upper body second hit. Moderate load, higher reps. Everything gets a second stimulus to close the week.',
+    exercises:[
+      {name:'Seated Chest Press Machine',sets:3,reps:'10–12',rest:'2 min',cue:'Same machine as Tuesday, different stimulus via higher reps.',tag:'Hypertrophy'},
+      {name:'Lat Pulldown (neutral grip)',sets:3,reps:'10–12',rest:'2 min',cue:'Second back frequency. Neutral grip protects shoulder.',tag:'Hypertrophy'},
+      {name:'Pec Deck Machine Fly',sets:3,reps:'15–20',rest:'75s',cue:'Second chest session. Lengthened position, slow squeeze at peak.',tag:'Hypertrophy'},
+      {name:'Seated Cable Row (wide grip)',sets:3,reps:'10–12',rest:'90s',cue:'Different grip from Wednesday — hits upper back differently.',tag:'Hypertrophy'},
+      {name:'Cable Lateral Raise (bilateral)',sets:3,reps:'15–20',rest:'60s',cue:'Second side delt session. High frequency works well for delts.',tag:'Hypertrophy'},
+      {name:'EZ Bar Curl',sets:3,reps:'8–10',rest:'90s',cue:'Reduces wrist stress. Strength focus for biceps second session.',tag:'Strength'},
+      {name:'Tricep Pushdown (rope)',sets:3,reps:'12–15',rest:'60s',cue:'Different stimulus from Tuesday V-bar. Spread rope at bottom for lateral head.',tag:'Hypertrophy'},
+    ]},
+];
+
+// ============================================================
+// STORAGE
+// ============================================================
+// IndexedDB storage - works on iOS Safari file://
+var DB=null;
+function openDB(cb){
+  if(DB){cb(DB);return;}
+  var req=indexedDB.open('h5v2',1);
+  req.onupgradeneeded=function(e){e.target.result.createObjectStore('data');};
+  req.onsuccess=function(e){DB=e.target.result;cb(DB);};
+  req.onerror=function(){cb(null);};
+}
+function getSessions(){
+  // sync fallback - return from memory cache or localStorage
+  try{return JSON.parse(localStorage.getItem('h5v2_sessions'))||[];}catch(e){return [];}
+}
+function saveSessions(s,cb){
+  // Save to localStorage
+  try{localStorage.setItem('h5v2_sessions',JSON.stringify(s));}catch(e){}
+  // Save to IndexedDB as backup
+  openDB(function(db){
+    if(!db) return;
+    try{
+      var tx=db.transaction('data','readwrite');
+      tx.objectStore('data').put(s,'sessions');
+    }catch(e){}
+  });
+  if(cb) cb();
+}
+function loadSessionsAsync(cb){
+  openDB(function(db){
+    if(!db){cb(getSessions());return;}
+    try{
+      var tx=db.transaction('data','readonly');
+      var req=tx.objectStore('data').get('sessions');
+      req.onsuccess=function(e){
+        var data=e.target.result||getSessions();
+        if(data&&data.length>0){
+          try{localStorage.setItem('h5v2_sessions',JSON.stringify(data));}catch(e){}
+        }
+        cb(data||[]);
+      };
+      req.onerror=function(){cb(getSessions());};
+    }catch(e){cb(getSessions());}
+  });
+}
+
+// ============================================================
+// VIEWS
+// ============================================================
+function showView(id){
+  ['view-home','view-session','view-history','view-manual'].forEach(v=>{
+    document.getElementById(v).style.display = (v===id)?'block':'none';
+  });
+  window.scrollTo(0,0);
+}
+function goHome(){showView('view-home');renderHome();}
+
+// ============================================================
+// HOME
+// ============================================================
+function renderHome(){
+  renderWeekStrip();
+  renderStats();
+  renderDayCards();
+}
+
+function renderWeekStrip(){
+  const sessions = getSessions();
+  const today = new Date();
+  const dow = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate()-((dow+6)%7));
+  const wdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dayIds = ['legs1','push','pull','legs2','closed','upper','closed'];
+  const colors = ['#27ae60','#c0392b','#2980b9','#16a085','#1a1a1a','#d35400','#1a1a1a'];
+  const strip = document.getElementById('week-strip');
+  strip.innerHTML='';
+  wdays.forEach((wd,i)=>{
+    const d=new Date(monday); d.setDate(monday.getDate()+i);
+    const isRest=dayIds[i]==='rest1'||dayIds[i]==='rest2'||dayIds[i]==='closed';
+    const done=sessions.some(s=>new Date(s.date).toDateString()===d.toDateString()&&s.dayId===dayIds[i]);
+    const dayIdx=DAYS.findIndex(x=>x.id===dayIds[i]);
+    const div=document.createElement('div');
+    div.className='week-cell'+(isRest?' rest-cell':'');
+    div.style.background=colors[i];
+    if(!isRest) div.onclick=()=>openDay(dayIdx);
+    div.innerHTML='<div class="wday">'+wd+'</div><div class="wsession">'+(dayIds[i]==='closed'?'OFF':isRest?'REST':dayIds[i].toUpperCase().slice(0,4))+'</div><div class="wdot'+(done?' done':'')+'"></div>';
+    strip.appendChild(div);
+  });
+}
+
+function renderStats(){
+  const sessions=getSessions();
+  document.getElementById('stat-total').textContent=sessions.length;
+  const now=new Date(), ws=new Date(now);
+  ws.setDate(now.getDate()-((now.getDay()+6)%7)); ws.setHours(0,0,0,0);
+  document.getElementById('stat-week').textContent=sessions.filter(s=>new Date(s.date)>=ws).length;
+  let streak=0;
+  if(sessions.length>0){
+    const uniq=[...new Set(sessions.map(s=>new Date(s.date).toDateString()))].sort((a,b)=>new Date(b)-new Date(a));
+    const tod=new Date().toDateString(), yes=new Date(Date.now()-86400000).toDateString();
+    if(uniq[0]===tod||uniq[0]===yes){
+      for(let i=0;i<uniq.length;i++){
+        const exp=new Date(uniq[0]); exp.setDate(new Date(uniq[0]).getDate()-i);
+        if(new Date(uniq[i]).toDateString()===exp.toDateString()) streak++;
+        else break;
+      }
+    }
+  }
+  document.getElementById('stat-streak').textContent=streak;
+}
+
+function renderDayCards(){
+  const sessions=getSessions();
+  const container=document.getElementById('home-cards');
+  container.innerHTML='';
+  DAYS.forEach((d,i)=>{
+    const isRest=d.label==='REST';
+    const last=sessions.filter(s=>s.dayId===d.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+    const card=document.createElement('div');
+    card.className='day-card'+(isRest?' rest-card':'');
+    if(!isRest) card.onclick=()=>openDay(i);
+    let statusHtml='';
+    if(last){
+      const ds=new Date(last.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      const ts=last.exercises.reduce((a,ex)=>a+(ex.sets||[]).filter(s=>s.done).length,0);
+      statusHtml='<div class="cstatus badge-done">✓ Last: '+ds+' · '+ts+' sets</div>';
+    } else if(!isRest){
+      statusHtml='<div class="cstatus" style="color:var(--muted);">No sessions yet</div>';
+    }
+    card.innerHTML='<div class="cbar" style="background:'+d.color+';"></div><div class="cbody"><div class="cmeta">'+d.day+' · '+d.weekday+'</div><div class="ctitle">'+d.icon+' '+d.label+'</div><div class="cfocus">'+d.focus+'</div>'+statusHtml+'</div>'+(isRest?'':'<div class="carrow">&#8250;</div>');
+    container.appendChild(card);
+  });
+  // Buttons row
+  const btns=document.createElement('div');
+  btns.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;';
+  btns.innerHTML='<button onclick="showHistory()" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">📋 History</button>'
+    +'<button onclick="showManualEntry()" style="background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;">✏️ Log Past</button>';
+  container.appendChild(btns);
+}
+
+// ============================================================
+// SESSION
+// ============================================================
+let curDayIdx=null, curSets={}, curStart=null;
+
+function openDay(idx){
+  const day=DAYS[idx];
+  if(day.label==='REST') return;
+  curDayIdx=idx; curStart=Date.now(); curSets={};
+  const sessions=getSessions();
+  const prev=sessions.filter(s=>s.dayId===day.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];
+  day.exercises.forEach((ex,i)=>{
+    const pe=prev?prev.exercises.find(e=>e.name===ex.name):null;
+    curSets[i]=[];
+    for(let s=0;s<ex.sets;s++){
+      const ps=pe&&pe.sets&&pe.sets[s];
+      curSets[i].push({weight:'',reps:'',done:false,pw:ps?ps.weight:'',pr:ps?ps.reps:''});
+    }
+  });
+  document.getElementById('session-nav-title').textContent=day.icon+' '+day.label;
+  const hdr=document.getElementById('session-header-block');
+  hdr.className='session-header';
+  hdr.style.background=day.color;
+  hdr.innerHTML='<div class="session-meta">'+day.day+' · '+day.weekday.toUpperCase()+'</div>'
+    +'<div class="session-title">'+day.icon+' '+day.label+'</div>'
+    +'<div class="session-focus">'+day.focus+'</div>'
+    +(day.note?'<div class="session-note">🔬 '+day.note+'</div>':'');
+  const ec=document.getElementById('ex-cards-container');
+  ec.innerHTML='';
+  day.exercises.forEach((ex,i)=>ec.appendChild(buildExCard(ex,i)));
+  showView('view-session');
+}
+
+function buildExCard(ex,exIdx){
+  const card=document.createElement('div');
+  card.className='ex-card';
+  card.innerHTML='<div class="ex-card-head"><div class="ex-num">'+(exIdx+1)+'</div><div style="flex:1;"><div class="ex-name">'+ex.name+'</div><div class="ex-target">'+ex.sets+' sets · '+ex.reps+' reps · ⏱ '+ex.rest+'</div><span class="ex-tag tag-'+ex.tag+'">'+ex.tag+'</span></div></div>'
+    +'<div class="ex-cue">💡 '+ex.cue+'</div>'
+    +'<div class="set-logger" id="logger-'+exIdx+'"></div>';
+  setTimeout(()=>renderLogger(exIdx),0);
+  return card;
+}
+
+function renderLogger(exIdx){
+  const el=document.getElementById('logger-'+exIdx);
+  if(!el) return;
+  const sets=curSets[exIdx];
+  const frag=document.createDocumentFragment();
+  // Labels
+  const lrow=document.createElement('div');
+  lrow.className='set-labels';
+  lrow.innerHTML='<div class="set-lbl">SET</div><div class="set-lbl">KG/LBS</div><div class="set-lbl">REPS</div><div></div>';
+  frag.appendChild(lrow);
+  sets.forEach((set,si)=>{
+    const row=document.createElement('div');
+    row.className='set-row';
+    // badge
+    const badge=document.createElement('div');
+    badge.className='set-badge'+(set.done?' logged':'');
+    badge.id='badge-'+exIdx+'-'+si;
+    badge.textContent=set.done?'✓':String(si+1);
+    badge.onclick=()=>toggleSet(exIdx,si);
+    // weight input
+    const wWrap=document.createElement('div');
+    const wInp=document.createElement('input');
+    wInp.className='set-input'+(set.weight?' has-val':'');
+    wInp.type='number'; wInp.inputMode='decimal';
+    wInp.placeholder=set.pw||''; wInp.value=set.weight;
+    wInp.id='w-'+exIdx+'-'+si;
+    wInp.oninput=function(){updateSet(exIdx,si,'weight',this.value);};
+    const wPrev=document.createElement('div');
+    wPrev.className='prev-val'; wPrev.textContent=set.pw?set.pw:'—';
+    wWrap.appendChild(wInp); wWrap.appendChild(wPrev);
+    // reps input
+    const rWrap=document.createElement('div');
+    const rInp=document.createElement('input');
+    rInp.className='set-input'+(set.reps?' has-val':'');
+    rInp.type='number'; rInp.inputMode='numeric';
+    rInp.placeholder=set.pr||''; rInp.value=set.reps;
+    rInp.id='r-'+exIdx+'-'+si;
+    rInp.oninput=function(){updateSet(exIdx,si,'reps',this.value);};
+    const rPrev=document.createElement('div');
+    rPrev.className='prev-val'; rPrev.textContent=set.pr?set.pr+'r':'—';
+    rWrap.appendChild(rInp); rWrap.appendChild(rPrev);
+    row.appendChild(badge); row.appendChild(wWrap); row.appendChild(rWrap);
+    row.appendChild(document.createElement('div'));
+    frag.appendChild(row);
+  });
+  const addBtn=document.createElement('button');
+  addBtn.className='add-set-btn'; addBtn.textContent='+ Add set';
+  addBtn.onclick=()=>addSet(exIdx);
+  frag.appendChild(addBtn);
+  el.innerHTML=''; el.appendChild(frag);
+}
+
+function updateSet(exIdx,si,field,val){
+  if(!curSets[exIdx]||!curSets[exIdx][si]) return;
+  curSets[exIdx][si][field]=val;
+  const inp=document.getElementById((field==='weight'?'w':'r')+'-'+exIdx+'-'+si);
+  if(inp) inp.classList.toggle('has-val',val.length>0);
+  const set=curSets[exIdx][si];
+  if(set.weight||set.reps){
+    set.done=true;
+    const badge=document.getElementById('badge-'+exIdx+'-'+si);
+    if(badge){badge.classList.add('logged');badge.textContent='✓';}
+  }
+}
+
+function toggleSet(exIdx,si){
+  const set=curSets[exIdx][si];
+  set.done=!set.done;
+  const badge=document.getElementById('badge-'+exIdx+'-'+si);
+  if(badge){badge.classList.toggle('logged',set.done);badge.textContent=set.done?'✓':String(si+1);}
+}
+
+function addSet(exIdx){
+  const sets=curSets[exIdx];
+  const last=sets[sets.length-1];
+  sets.push({weight:last?last.weight:'',reps:last?last.reps:'',done:false,pw:'',pr:''});
+  renderLogger(exIdx);
+}
+
+function finishSession(){
+  try{
+    const day=DAYS[curDayIdx];
+    if(!day){showToast('No active session');return;}
+    // Sweep DOM for any unflagged values
+    Object.keys(curSets).forEach(ei=>{
+      curSets[ei].forEach((set,si)=>{
+        const wEl=document.getElementById('w-'+ei+'-'+si);
+        const rEl=document.getElementById('r-'+ei+'-'+si);
+        if(wEl) set.weight=wEl.value.trim()||set.weight;
+        if(rEl) set.reps=rEl.value.trim()||set.reps;
+        if(set.weight||set.reps) set.done=true;
+      });
+    });
+    const totalDone=Object.values(curSets).reduce((a,sets)=>a+sets.filter(s=>s.done).length,0);
+    if(totalDone===0){showToast('Log at least one set first');return;}
+    const sessionData={
+      id:Date.now(), dayId:day.id, dayLabel:day.label, dayIcon:day.icon, color:day.color,
+      date:new Date().toISOString(),
+      duration:Math.max(1,Math.round((Date.now()-curStart)/60000)),
+      exercises:day.exercises.map((ex,i)=>({name:ex.name,tag:ex.tag,sets:(curSets[i]||[]).map(s=>({weight:s.weight,reps:s.reps,done:s.done}))}))
+    };
+    var remarksEl=document.getElementById('session-remarks');
+    sessionData.remarks=remarksEl?remarksEl.value.trim():'';
+    var sessions=getSessions(); sessions.push(sessionData); 
+    curDayIdx=null; curSets={}; curStart=null;
+    saveSessions(sessions);
+    showToast(day.icon+' Session saved! '+totalDone+' sets logged');
+    goHome();
+  }catch(err){alert('Save failed: '+err.message);}
+}
+
+function discardSession(){if(confirm('Discard this session?')) goHome();}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function showHistory(){renderHistory();showView('view-history');}
+
+function renderHistory(){
+  const sessions=getSessions().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const container=document.getElementById('history-container');
+  if(!sessions.length){container.innerHTML='<div style="text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;">No sessions logged yet.</div>';return;}
+  container.innerHTML='';
+  sessions.forEach((s,i)=>{
+    const ds=new Date(s.date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    const ts=s.exercises.reduce((a,ex)=>a+(ex.sets||[]).filter(s=>s.done).length,0);
+    const tv=s.exercises.reduce((a,ex)=>a+(ex.sets||[]).filter(s=>s.done&&s.weight&&s.reps).reduce((b,s)=>b+(parseFloat(s.weight)||0)*(parseFloat(s.reps)||0),0),0);
+    const div=document.createElement('div');
+    div.className='history-session';
+    const exRows=s.exercises.map(ex=>{
+      const done=(ex.sets||[]).filter(s=>s.done);
+      if(!done.length) return '';
+      return '<div class="history-ex"><div class="history-ex-name">'+ex.name+'</div>'+done.map((set,si)=>'<div class="history-set-row"><span>Set '+(si+1)+'</span>'+(set.weight?'<span>'+set.weight+'</span>':'')+(set.reps?'<span>'+set.reps+' reps</span>':'')+'</div>').join('')+'</div>';
+    }).join('')+(s.remarks?'<div style="margin-top:10px;padding:10px 12px;background:#1a1a1a;border-radius:8px;font-size:12px;color:#888;font-style:italic;border-left:3px solid #333;">&#128172; '+s.remarks+'</div>':'');
+    div.innerHTML='<div class="history-head" onclick="toggleHist('+i+')"><div class="history-dot" style="background:'+s.color+';"></div><div style="flex:1;"><div class="history-day">'+s.dayIcon+' '+s.dayLabel+'</div><div class="history-date">'+ds+' · '+s.duration+' min</div><div class="history-stats-line">'+ts+' sets'+(tv>0?' · '+Math.round(tv).toLocaleString()+' vol':'')+' </div></div><div style="color:var(--muted);font-size:18px;" id="ha-'+i+'">›</div></div>'
+      +'<div class="history-body" id="hb-'+i+'">'+exRows+'</div>';
+    const del=document.createElement('button');
+    del.style.cssText='width:100%;background:transparent;border:none;border-top:1px solid var(--border);color:#c0392b;padding:10px;font-size:12px;cursor:pointer;font-family:inherit;';
+    del.textContent='Delete session';
+    del.onclick=e=>{e.stopPropagation();deleteSession(s.id);};
+    div.appendChild(del);
+    container.appendChild(div);
+  });
+}
+
+function toggleHist(i){
+  const b=document.getElementById('hb-'+i), a=document.getElementById('ha-'+i);
+  b.classList.toggle('open'); a.textContent=b.classList.contains('open')?'↓':'›';
+}
+
+function deleteSession(id){
+  if(!confirm('Delete this session?')) return;
+  saveSessions(getSessions().filter(s=>s.id!==id));
+  renderHistory(); renderStats();
+}
+
+// ============================================================
+// MANUAL ENTRY
+// ============================================================
+let manSets={};
+
+function showManualEntry(){
+  document.getElementById('manual-day').value='';
+  document.getElementById('manual-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('manual-exercises').innerHTML='';
+  manSets={};
+  showView('view-manual');
+}
+
+function buildManualExercises(){
+  const dayIdx=parseInt(document.getElementById('manual-day').value);
+  if(isNaN(dayIdx)) return;
+  const day=DAYS[dayIdx];
+  manSets={};
+  day.exercises.forEach((ex,i)=>{
+    manSets[i]=[];
+    for(let s=0;s<ex.sets;s++) manSets[i].push({weight:'',reps:''});
+  });
+  renderManualExercises(dayIdx);
+}
+
+function renderManualExercises(dayIdx){
+  const day=DAYS[dayIdx];
+  const container=document.getElementById('manual-exercises');
+  container.innerHTML='';
+  day.exercises.forEach((ex,i)=>{
+    const card=document.createElement('div');
+    card.className='manual-ex';
+    const head=document.createElement('div');
+    head.className='manual-ex-head';
+    head.innerHTML='<div class="manual-ex-name">'+ex.name+'</div><div class="manual-ex-sub">'+ex.sets+' sets · '+ex.reps+' reps</div>';
+    const area=document.createElement('div');
+    area.className='manual-set-area';
+    area.id='mlog-'+i;
+    card.appendChild(head); card.appendChild(area);
+    container.appendChild(card);
+    renderManualLogger(i);
+  });
+}
+
+function renderManualLogger(exIdx){
+  const el=document.getElementById('mlog-'+exIdx);
+  if(!el) return;
+  const sets=manSets[exIdx];
+  const frag=document.createDocumentFragment();
+  const lrow=document.createElement('div');
+  lrow.className='manual-set-labels';
+  lrow.innerHTML='<div class="set-lbl">SET</div><div class="set-lbl">KG / LBS</div><div class="set-lbl">REPS</div>';
+  frag.appendChild(lrow);
+  sets.forEach((set,si)=>{
+    const row=document.createElement('div');
+    row.className='manual-set-row';
+    const num=document.createElement('div');
+    num.className='manual-set-num'; num.textContent=String(si+1);
+    const wInp=document.createElement('input');
+    wInp.className='manual-input'; wInp.type='number'; wInp.inputMode='decimal';
+    wInp.placeholder='—'; wInp.value=set.weight;
+    wInp.oninput=function(){manSets[exIdx][si].weight=this.value;};
+    const rInp=document.createElement('input');
+    rInp.className='manual-input'; rInp.type='number'; rInp.inputMode='numeric';
+    rInp.placeholder='—'; rInp.value=set.reps;
+    rInp.oninput=function(){manSets[exIdx][si].reps=this.value;};
+    row.appendChild(num); row.appendChild(wInp); row.appendChild(rInp);
+    frag.appendChild(row);
+  });
+  const addBtn=document.createElement('button');
+  addBtn.className='manual-add-btn'; addBtn.textContent='+ Add set';
+  addBtn.onclick=()=>{
+    const last=manSets[exIdx][manSets[exIdx].length-1];
+    manSets[exIdx].push({weight:last?last.weight:'',reps:last?last.reps:''});
+    renderManualLogger(exIdx);
+  };
+  frag.appendChild(addBtn);
+  el.innerHTML=''; el.appendChild(frag);
+}
+
+function saveManualSession(){
+  try{
+    const dayIdx=parseInt(document.getElementById('manual-day').value);
+    const dateVal=document.getElementById('manual-date').value;
+    if(isNaN(dayIdx)){showToast('Select a day first');return;}
+    if(!dateVal){showToast('Pick a date');return;}
+    const day=DAYS[dayIdx];
+    const exercises=day.exercises.map((ex,i)=>({
+      name:ex.name, tag:ex.tag,
+      sets:(manSets[i]||[]).filter(s=>s.weight||s.reps).map(s=>({weight:s.weight,reps:s.reps,done:true}))
+    }));
+    const totalDone=exercises.reduce((a,ex)=>a+ex.sets.length,0);
+    if(totalDone===0){showToast('Log at least one set first');return;}
+    const sessionData={
+      id:Date.now(), dayId:day.id, dayLabel:day.label, dayIcon:day.icon, color:day.color,
+      date:new Date(dateVal+'T12:00:00').toISOString(),
+      duration:60, exercises
+    };
+    var manRemarksEl=document.getElementById('manual-remarks');
+    sessionData.remarks=manRemarksEl?manRemarksEl.value.trim():'';
+    var sessions=getSessions(); sessions.push(sessionData); saveSessions(sessions);
+    showToast(day.icon+' Session saved! '+totalDone+' sets logged');
+    goHome();
+  }catch(err){alert('Save failed: '+err.message);}
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadSessionsAsync(function(sessions){
+  // Sync to localStorage so getSessions() works synchronously
+  try{if(sessions&&sessions.length>0) localStorage.setItem('h5v2_sessions',JSON.stringify(sessions));}catch(e){}
+  renderHome();
+  showView('view-home');
+});
+</script>
+</body>
+</html>
